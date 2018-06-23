@@ -1,0 +1,39 @@
+{
+  "disabled": false,
+  "bindings": [
+    {
+      "type": "httpTrigger",
+      "name": "req",
+      "direction": "in",
+      "dataType": "string"
+    },
+    {
+      "type": "table",
+      "name": "configTblIn",
+      "direction": "in",
+      "connection": "AzureWebJobsStorage",
+      "tableName": "AuditConfig"
+    },
+    {
+      "type": "table",
+      "direction": "in",
+      "name": "invalidTypesTbl",
+      "connection": "AzureWebJobsStorage",
+      "tableName": "InvalidTagResources"
+    },
+    {
+      "type": "table",
+      "name": "configTblOut",
+      "direction": "out",
+      "connection": "AzureWebJobsStorage",
+      "tableName": "AuditConfig"
+      },
+    {
+      "type": "queue",
+      "name": "outputQueueItem",
+      "queueName": "outqueue",
+      "connection": "AzureWebJobsStorage",
+      "direction": "out"
+      }
+  ]
+}
