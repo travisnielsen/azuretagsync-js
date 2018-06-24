@@ -1,0 +1,10 @@
+{
+    "extends": "standard",
+    "rules": {
+        "eqeqeq": "off",
+        "curly": "error",
+        "semi": "off",
+        "indent": "off",
+        "yoda": "warn"
+    }
+}
