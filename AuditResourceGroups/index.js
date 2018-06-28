@@ -1,6 +1,6 @@
 var msRestAzure = require('ms-rest-azure');
 var ResourceManagementClient = require('azure-arm-resource').ResourceManagementClient;
-var tagUtil = require('../Services/tagUtil.js');
+var tagUtil = require('../AuditResourceGroups/tagUtil');
 var appId = process.env['appId']; // service principal
 var appSecret = process.env['appSecret'];
 var tennantId = process.env['tenantId']; // tenant id;
