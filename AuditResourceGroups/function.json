@@ -16,24 +16,31 @@
     },
     {
       "type": "table",
-      "direction": "in",
-      "name": "invalidTypesTbl",
-      "connection": "AzureWebJobsStorage",
-      "tableName": "InvalidTagResources"
-    },
-    {
-      "type": "table",
       "name": "configTblOut",
       "direction": "out",
       "connection": "AzureWebJobsStorage",
       "tableName": "AuditConfig"
-      },
+    },
+    {
+      "type": "table",
+      "direction": "in",
+      "name": "resourceTypesIn",
+      "connection": "AzureWebJobsStorage",
+      "tableName": "ResourceTypes"
+    },
+    {
+      "type": "table",
+      "direction": "out",
+      "name": "resourceTypesOut",
+      "connection": "AzureWebJobsStorage",
+      "tableName": "ResourceTypes"
+    },
     {
       "type": "queue",
-      "name": "outputQueueItem",
-      "queueName": "outqueue",
+      "name": "outputQueue",
+      "queueName": "resources-to-tag",
       "connection": "AzureWebJobsStorage",
       "direction": "out"
-      }
+    }
   ]
 }
