@@ -95,7 +95,6 @@ async function getApiVersion (type) {
         });
 
         if (matchingProvider) {
-            // Add to list
             var apiVersion = matchingProvider.apiVersions[0];
             var apiLocation = matchingProvider.locations[0];
             newResourceTypes.push({ PartitionKey: 'init', RowKey: uuidv4(), Namespace: namespace, Type: resourceType, ApiVersion: apiVersion, ApiLocation: apiLocation });
