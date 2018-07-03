@@ -13,17 +13,17 @@ exports.getRequiredTags = function (rgTags, requiredTagsList) {
 };
 
 exports.getTagUpdates = function (resTags, rgTags) {
+    if (resTags === undefined) {
+        // resource does not have any tags. Set to the RG required tags and exit.
+        resTags = rgTags;
+        return true;
+    }
+
     var resTagKeys = Object.keys(resTags);
     var rgTagKeys = Object.keys(rgTags);
-
     var tagUpdateRequired = false;
 
     rgTagKeys.forEach(rgTagKey => {
-        if (resTags === undefined) {
-            // resource does not have any tags. Set to the RG required tags and exit.
-            return rgTags;
-        }
-
         if (resTagKeys.includes(rgTagKey)) {
             // resource has matching required RG tag
             if (resTags[rgTagKey] !== rgTags[rgTagKey]) {

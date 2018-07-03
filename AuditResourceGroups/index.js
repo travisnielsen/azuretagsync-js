@@ -18,6 +18,7 @@ module.exports = async function (context) {
     resourceTypes = context.bindings.resourceTypesIn;
     context.bindings.resourceTypesOut = newResourceTypes;
     var invalidTypes = resourceTypes.filter(item => item.ErrorMessage !== undefined);
+    var invalidTypesArr = invalidTypes.map(a => a.Type);
 
     if (configItems.length < 1) {
         // TODO: Create defaulf config items
@@ -31,7 +32,7 @@ module.exports = async function (context) {
         context.log(subscriptionConfig.SubscriptionId);
         var tagList = subscriptionConfig.RequiredTags.split(',');
         resourceClient = new ResourceManagementClient(credentials, subscriptionConfig.SubscriptionId);
-        var tagUpdates = await processResourceGroups(tagList, invalidTypes);
+        var tagUpdates = await processResourceGroups(tagList, invalidTypesArr);
         outQueueItems.push.apply(outQueueItems, tagUpdates);
     }
 
@@ -54,19 +55,22 @@ async function processResourceGroups (tagList, invalidTypes, callback) {
             var resourceItems = await resourceClient.resources.listByResourceGroup(rg.name);
 
             for (let resItem of resourceItems) {
-                if (resItem.tags === undefined) {
-                    ctx.log.warn('Resource type:', resItem.type, 'does not support tags.', resItem.id);
-                } else if (invalidTypes.indexOf(resItem.type) > -1) {
+                var tagUpdatesRequired = false;
+                if (invalidTypes.indexOf(resItem.type) > -1) {
                     ctx.log.warn('Resource type:', resItem.type, 'has known tag issue.', resItem.id);
+                    tagUpdatesRequired = false;
                 } else {
-                    var tagUpdatesRequired = tagUtil.getTagUpdates(resItem.tags, tagsToSync);
+                    if (resItem.tags === undefined) {
+                        resItem.tags = {};
+                    }
+                    tagUpdatesRequired = tagUtil.getTagUpdates(resItem.tags, tagsToSync);
                 }
 
                 if (tagUpdatesRequired) {
                     var result = await getApiVersion(resItem.type);
-                    ctx.log(result);
                     resItem.apiVersion = result.ApiVersion;
                     resItem.apiLocation = result.ApiLocation;
+                    resItem.type = result.Type;
                     ctx.log.info('Submitting tag updates for: ', resItem.id);
                     updatesList.push(JSON.stringify(resItem));
                 }
@@ -82,7 +86,7 @@ async function getApiVersion (type) {
     var resourceType = type.slice(namespace.length).slice(1);
 
     var matchingResource = resourceTypes.find(function (item) {
-        return item.Type === resourceType;
+        return item.Type === type;
     });
 
     if (matchingResource) {
@@ -97,9 +101,9 @@ async function getApiVersion (type) {
         if (matchingProvider) {
             var apiVersion = matchingProvider.apiVersions[0];
             var apiLocation = matchingProvider.locations[0];
-            newResourceTypes.push({ PartitionKey: 'init', RowKey: uuidv4(), Namespace: namespace, Type: resourceType, ApiVersion: apiVersion, ApiLocation: apiLocation });
-            resourceTypes.push({ PartitionKey: 'init', RowKey: uuidv4(), Namespace: namespace, Type: resourceType, ApiVersion: apiVersion, ApiLocation: apiLocation });
-            return { PartitionKey: 'init', RowKey: uuidv4(), Namespace: namespace, Type: resourceType, ApiVersion: apiVersion, ApiLocation: apiLocation };
+            newResourceTypes.push({ PartitionKey: 'init', RowKey: uuidv4(), Type: type, ApiVersion: apiVersion, ApiLocation: apiLocation });
+            resourceTypes.push({ PartitionKey: 'init', RowKey: uuidv4(), Type: type, ApiVersion: apiVersion, ApiLocation: apiLocation });
+            return { PartitionKey: 'init', RowKey: uuidv4(), Type: type, ApiVersion: apiVersion, ApiLocation: apiLocation };
         }
     }
 }

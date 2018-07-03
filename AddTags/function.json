@@ -1,0 +1,19 @@
+{
+  "disabled": false,
+  "bindings": [
+    {
+      "name": "myQueueItem",
+      "type": "queueTrigger",
+      "direction": "in",
+      "queueName": "resources-to-tag",
+      "connection": "AzureWebJobsStorage"
+    },
+    {
+      "type": "table",
+      "direction": "in",
+      "name": "resourceTypesIn",
+      "connection": "AzureWebJobsStorage",
+      "tableName": "ResourceTypes"
+    }
+  ]
+}
