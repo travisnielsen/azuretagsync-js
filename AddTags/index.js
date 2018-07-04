@@ -1,17 +1,18 @@
-var msRestAzure = require('ms-rest-azure');
+var authService = require('../services/authService');
 var ResourceManagementClient = require('azure-arm-resource').ResourceManagementClient;
 var azure = require('azure-storage');
-
-var appId = process.env['appId']; // service principal
-var appSecret = process.env['appSecret'];
-var tennantId = process.env['tenantId']; // tenant id;
+var connectionString;
+var tableService;
 
 module.exports = async function (context, myQueueItem) {
     context.log('AddTags triggered for resource:', myQueueItem.id);
     var subscriptionId = myQueueItem.id.split('/')[2];
 
+    connectionString = process.env['AzureWebJobsStorage'];
+    tableService = azure.createTableService(connectionString);
+
     try {
-        var credentials = await msRestAzure.loginWithServicePrincipalSecret(appId, appSecret, tennantId);
+        var credentials = await authService.getToken();
         var resourceClient = new ResourceManagementClient(credentials, subscriptionId);
     } catch (err) {
         context.log.error('Unable to connect to the ARM API. Message:', err.message);
@@ -38,9 +39,8 @@ module.exports = async function (context, myQueueItem) {
 async function addErrorMessage (context, updateItem, message) {
     var resourceTableItem = context.bindings.resourceTypesIn.filter(item => item.Type === updateItem.type)[0];
     resourceTableItem.ErrorMessage = message;
-    let connectionString = process.env['AzureWebJobsStorage'];
-    let tableService = azure.createTableService(connectionString);
-    tableService.replaceEntity('ResourceTypes', resourceTableItem, function (error, result) {
+
+    tableService.replaceEntity('ResourceTypes', resourceTableItem, function (error) {
         if (error) {
             context.log.error('Error updating table item. Message:', error.message);
         }

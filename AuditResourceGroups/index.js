@@ -1,18 +1,15 @@
-var msRestAzure = require('ms-rest-azure');
+var authService = require('../Services/authService');
 var ResourceManagementClient = require('azure-arm-resource').ResourceManagementClient;
-var tagUtil = require('../AuditResourceGroups/tagUtil');
+var tagUtil = require('../services/tagService');
 const uuidv4 = require('uuid/v4');
 
-var appId = process.env['appId']; // service principal
-var appSecret = process.env['appSecret'];
-var tennantId = process.env['tenantId']; // tenant id;
 var resourceClient;
 var ctx;
 var resourceTypes;
 var newResourceTypes = [];
 var outQueueItems = [];
 
-module.exports = async function (context) {
+module.exports = async function (context, auditTimer) {
     var configItems = context.bindings.configTblIn;
     ctx = context;
     resourceTypes = context.bindings.resourceTypesIn;
@@ -26,7 +23,7 @@ module.exports = async function (context) {
         return;
     }
 
-    var credentials = await msRestAzure.loginWithServicePrincipalSecret(appId, appSecret, tennantId);
+    var credentials = await authService.getToken();
 
     for (let subscriptionConfig of configItems) {
         context.log(subscriptionConfig.SubscriptionId);

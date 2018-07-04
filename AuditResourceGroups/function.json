@@ -1,46 +1,49 @@
 {
-  "disabled": false,
-  "bindings": [
-    {
-      "type": "httpTrigger",
-      "name": "req",
-      "direction": "in",
-      "dataType": "string"
-    },
-    {
-      "type": "table",
-      "name": "configTblIn",
-      "direction": "in",
-      "connection": "AzureWebJobsStorage",
-      "tableName": "AuditConfig"
-    },
-    {
-      "type": "table",
-      "name": "configTblOut",
-      "direction": "out",
-      "connection": "AzureWebJobsStorage",
-      "tableName": "AuditConfig"
-    },
-    {
-      "type": "table",
-      "direction": "in",
-      "name": "resourceTypesIn",
-      "connection": "AzureWebJobsStorage",
-      "tableName": "ResourceTypes"
-    },
-    {
-      "type": "table",
-      "direction": "out",
-      "name": "resourceTypesOut",
-      "connection": "AzureWebJobsStorage",
-      "tableName": "ResourceTypes"
-    },
-    {
-      "type": "queue",
-      "name": "outputQueue",
-      "queueName": "resources-to-tag",
-      "connection": "AzureWebJobsStorage",
-      "direction": "out"
-    }
-  ]
+ "disabled": false,
+ "bindings": [
+  {
+   "type": "timerTrigger",
+   "name": "myTimer",
+   "schedule": "0 0 */2 * * *",
+   "useMonitor": true,
+   "runOnStartup": false
+  },
+  {
+   "type": "table",
+   "name": "configTblIn",
+   "direction": "in",
+   "connection": "AzureWebJobsStorage",
+   "tableName": "AuditConfig"
+  },
+  {
+   "type": "table",
+   "name": "configTblOut",
+   "direction": "out",
+   "connection": "AzureWebJobsStorage",
+   "tableName": "AuditConfig"
+  },
+  {
+   "type": "table",
+   "direction": "in",
+   "name": "resourceTypesIn",
+   "connection": "AzureWebJobsStorage",
+   "tableName": "ResourceTypes"
+  },
+  {
+   "type": "table",
+   "direction": "out",
+   "name": "resourceTypesOut",
+   "connection": "AzureWebJobsStorage",
+   "tableName": "ResourceTypes"
+  },
+  {
+   "type": "queue",
+   "name": "outputQueue",
+   "queueName": "resources-to-tag",
+   "connection": "AzureWebJobsStorage",
+   "direction": "out"
+  }
+ ],
+ "scriptFile": "index.js",
+ "entryPoint": "AuditResourceGroups"
 }
