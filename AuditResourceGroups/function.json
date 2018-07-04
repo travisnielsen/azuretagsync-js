@@ -44,8 +44,6 @@
    "direction": "out"
   }
  ],
- "scriptFile": "../.funcpack/index.js",
- "entryPoint": "AuditResourceGroups",
- "_originalEntryPoint": "AuditResourceGroups",
- "_originalScriptFile": "index.js"
+ "scriptFile": "index.js",
+ "entryPoint": "AuditResourceGroups"
 }

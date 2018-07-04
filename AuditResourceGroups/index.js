@@ -10,6 +10,7 @@ var newResourceTypes = [];
 var outQueueItems = [];
 
 module.exports = async function (context, auditTimer) {
+    context.log('Running:', process.version);
     var configItems = context.bindings.configTblIn;
     ctx = context;
     resourceTypes = context.bindings.resourceTypesIn;
@@ -23,7 +24,8 @@ module.exports = async function (context, auditTimer) {
         return;
     }
 
-    var credentials = await authService.getToken();
+    context.log('Authenticating...');
+    var credentials = await authService.getToken(context);
 
     for (let subscriptionConfig of configItems) {
         context.log(subscriptionConfig.SubscriptionId);

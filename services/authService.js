@@ -1,8 +1,9 @@
 var msRestAzure = require('ms-rest-azure');
 
-exports.getToken = async function () {
+exports.getToken = async function (context) {
     if (process.env['MSI_ENDPOINT']) {
         // Use MSI
+        context.log('Using MSI');
         return msRestAzure.loginWithAppServiceMSI();
     } else {
         // Use Service Principal
@@ -13,6 +14,7 @@ exports.getToken = async function () {
         if (appId === undefined || appSecret === undefined || tennantId === undefined) {
             throw new Error('Service Principal undefined in app configuration.');
         } else {
+            context.log('Using service principal');
             return msRestAzure.loginWithServicePrincipalSecret(appId, appSecret, tennantId);
         }
     }
