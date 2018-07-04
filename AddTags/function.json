@@ -16,6 +16,8 @@
    "tableName": "ResourceTypes"
   }
  ],
- "scriptFile": "index.js",
- "entryPoint": "AddTags"
+ "scriptFile": "../.funcpack/index.js",
+ "entryPoint": "AddTags",
+ "_originalEntryPoint": "AddTags",
+ "_originalScriptFile": "index.js"
 }
