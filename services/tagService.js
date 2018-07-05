@@ -52,16 +52,3 @@ exports.getTagUpdates = function (resTags, rgTags) {
 
     return tagUpdateRequired;
 };
-
-/*
-class AuditResource {
-    constructor (type, location, apiVersion) {
-        this.partitionKey = 'init';
-        this.rowKey = uuidv4();
-        this.type = type;
-        this.location = location;
-        this.apiVersion = apiVersion;
-        this.errorMessage = '';
-    }
-}
-*/

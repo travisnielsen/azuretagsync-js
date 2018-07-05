@@ -2,11 +2,10 @@
  "disabled": false,
  "bindings": [
   {
-   "type": "timerTrigger",
-   "name": "myTimer",
-   "schedule": "0 0 */2 * * *",
-   "useMonitor": true,
-   "runOnStartup": false
+        "type": "httpTrigger",
+        "name": "req",
+        "direction": "in",
+        "dataType": "string"
   },
   {
    "type": "table",

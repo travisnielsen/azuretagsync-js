@@ -12,7 +12,7 @@ module.exports = async function (context, myQueueItem) {
     tableService = azure.createTableService(connectionString);
 
     try {
-        var credentials = await authService.getToken();
+        var credentials = await authService.getToken(context);
         var resourceClient = new ResourceManagementClient(credentials, subscriptionId);
     } catch (err) {
         context.log.error('Unable to connect to the ARM API. Message:', err.message);

@@ -7,12 +7,6 @@ This is a proof-of-concept application that synchronizes mandatory tags set on R
 
 ## Deployment
 
-### Prerequisites
-
-The application is written in Node.js and can be developed and tested using a PC, Mac, or Linux using the Functions 2.0 runtime. As such, it is highly recommended the user complete all setup and installation instructions documented here: [Code and test Azure Functions locally](https://docs.microsoft.com/en-us/azure/azure-functions/functions-run-local).
-It is assumed you are working with an updated version of [Visual Studio Code](https://code.visualstudio.com/) with the [Azure Functions extension](https://marketplace.visualstudio.com/items?itemName=ms-azuretools.vscode-azurefunctions) installed.
-
-You should also have a recent version of [Azure Storage Explorer](https://azure.microsoft.com/en-us/features/storage-explorer/) installed.
 
 ### Create and configure the Function App
 
@@ -24,6 +18,9 @@ Once the Function App is created, a few follow-up configurations are necessary:
 
 In the Azure Portal, navigate to the Function App and select *Function App Settings*. Switch the runtime version to **beta**.
 
+### Set the Node.js version
+
+Navigate to **Platform Features** > **App Settings** and create a new setting: ```WEBSITE_NODE_DEFAULT_VERSION``` and set the value to ```8.11.1```.
 
 #### Enable Managed Service Identity (MSI)
 
@@ -35,15 +32,9 @@ Next, you must assign the application permissions to each subscription you wish 
 
 Select the function app and click **Save**. Repeat this process for any additional subscriptions.
 
-#### Create the configuration tables
+#### Create storage tables
 
-Currently, two tables must be manually created within the storage account associated to the Function App before the solution can run. The easiest way to locate the table is by examining the resource group the function was deployed into.
-
-Use Azure Storage Explorer to create tables with the following names: *AuditConfig* and *ResourceTypes*
-
-#### Create the queue
-
-In the same storage account, use Storage Explorer to create a new queue with the following name: *resources-to-tag*
+Currently, two tables must be manually created within the storage account associated to the Function App before the solution can run. Use Azure Storage Explorer to create tables with the following names: *AuditConfig* and *ResourceTypes*
 
 ### Deploy the Functions
 Finally, clone the repository to your workstation and open the root folder in VS Code. Assuming you have the Azure Functions extension installed in VS Code, you can deploy directly to your Function App by right-clicking in the Explorer and selecting *Deploy to Function App*. You will be prompted to select a valid function app in your subscription. Use the one you created earlier.
@@ -51,8 +42,6 @@ Finally, clone the repository to your workstation and open the root folder in VS
 <img src="images/deploy-function-js.png" width=30%>
 
 ## Configuration and Operation
-
-NPM packages must be deployed to the server.
 
 By default, the ```AuditResourceGroups``` function runs once every 4 hours. The ```AddTags``` function is triggered by messages placed into the ```resources-to-tag``` queue created earler. You can manually initialize the process by clicking the Run button on ```AuditSubscriptionTags``` the portal. It is recommended to do this once after the deployment has been completed so that the columns for the ```AuditConfigTable``` are created.
 
@@ -83,6 +72,16 @@ Azure does not currently have a unified API for resource tagging. There are case
  When invoked, ```AuditSubscriptionTags``` reads all items from this table and skips any resource that matches a given type that indicates a tag error has happened. That way, repeated API calls that are known to fail are not made. Developers can use the information to update the code to better handle these specific resources. Administrators can use this table to tag these resources either via a script or manually.
 
 ## Local Development / Debugging
+
+### Developer Tools and Functions Runtime
+
+The application is written in Node.js and can be developed and tested using Windows, Mac, or Linux using the Functions 2.0 Core Tools. As such, it is highly recommended the user complete all setup and installation instructions documented here: [Code and test Azure Functions locally](https://docs.microsoft.com/en-us/azure/azure-functions/functions-run-local).
+It is assumed you are working with an updated version of [Visual Studio Code](https://code.visualstudio.com/) with the [Azure Functions extension](https://marketplace.visualstudio.com/items?itemName=ms-azuretools.vscode-azurefunctions) installed.
+
+You should also have a recent version of [Azure Storage Explorer](https://azure.microsoft.com/en-us/features/storage-explorer/) installed.
+
+### Node.js Version
+The supported version of Node.js is ```8.11.1```. Ensure this version is running on your local developmnent environment by running ```node -v```.
 
 ### Service Principal
 

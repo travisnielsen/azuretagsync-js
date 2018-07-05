@@ -1,4 +1,5 @@
 var authService = require('../Services/authService');
+var storageService = require('../Services/storageService');
 var ResourceManagementClient = require('azure-arm-resource').ResourceManagementClient;
 var tagUtil = require('../services/tagService');
 const uuidv4 = require('uuid/v4');
@@ -6,10 +7,12 @@ const uuidv4 = require('uuid/v4');
 var resourceClient;
 var ctx;
 var resourceTypes;
-var newResourceTypes = [];
-var outQueueItems = [];
+var newResourceTypes;
+var outQueueItems;
 
 module.exports = async function (context, auditTimer) {
+    outQueueItems = [];
+    newResourceTypes = [];
     context.log('Running:', process.version);
     var configItems = context.bindings.configTblIn;
     ctx = context;
@@ -18,9 +21,16 @@ module.exports = async function (context, auditTimer) {
     var invalidTypes = resourceTypes.filter(item => item.ErrorMessage !== undefined);
     var invalidTypesArr = invalidTypes.map(a => a.Type);
 
+    // SETUP ON FIRST USE
     if (configItems.length < 1) {
-        // TODO: Create defaulf config items
-        context.done();
+        var auditConfigItem = new AuditConfig('list,of,tags,here', 'your_subscription_id_here');
+        storageService.initTable('AuditConfig', auditConfigItem);
+        context.log('Added default configuration. Please update the AuditConfig table to match your subscription(s)');
+
+        if (resourceTypes.length < 1) {
+            storageService.initTable('ResourceTypes', new ResourceType('Microsoft.Storage/storageAccounts', 'East US', '2018-03-01-preview', 'properties'));
+            context.log('Configured ResourceTypes table');
+        }
         return;
     }
 
@@ -104,5 +114,25 @@ async function getApiVersion (type) {
             resourceTypes.push({ PartitionKey: 'init', RowKey: uuidv4(), Type: type, ApiVersion: apiVersion, ApiLocation: apiLocation });
             return { PartitionKey: 'init', RowKey: uuidv4(), Type: type, ApiVersion: apiVersion, ApiLocation: apiLocation };
         }
+    }
+}
+
+class ResourceType {
+    constructor (type, location, apiVersion, propertyExcludeList) {
+        this.PartitionKey = 'init';
+        this.RowKey = uuidv4();
+        this.Type = type;
+        this.ApiLocation = location;
+        this.ApiVersion = apiVersion;
+        this.PropertyExclude = propertyExcludeList;
+    }
+}
+
+class AuditConfig {
+    constructor (requiredTags, subscriptionId) {
+        this.PartitionKey = 'init';
+        this.RowKey = uuidv4();
+        this.RequiredTags = requiredTags;
+        this.SubscriptionId = subscriptionId;
     }
 }
