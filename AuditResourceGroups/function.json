@@ -5,7 +5,7 @@
    "type": "timerTrigger",
    "name": "auditTimer",
    "direction": "in",
-   "schedule": "0 0 */2 * * *",
+   "schedule": "0 0 */4 * * *",
    "runOnStartup": false
   },
   {

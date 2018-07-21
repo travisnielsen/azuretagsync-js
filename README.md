@@ -18,7 +18,7 @@ Once the Function App is created, a few follow-up configurations are necessary:
 
 In the Azure Portal, navigate to the Function App and select *Function App Settings*. Switch the runtime version to **beta**.
 
-### Set the Node.js version
+#### Set the Node.js version
 
 Navigate to **Platform Features** > **App Settings** and create a new setting: ```WEBSITE_NODE_DEFAULT_VERSION``` and set the value to ```8.11.1```.
 
@@ -53,7 +53,7 @@ Accept the remaining default settings. App Services will clone the repo, downloa
 
 ## Configuration and Operation
 
-By default, the ```AuditResourceGroups``` function runs once every 4 hours. The ```AddTags``` function is triggered by messages placed into the ```resources-to-tag``` queue. You can manually initialize the process by clicking the Run button on ```AuditSubscriptionTags``` the portal. It is recommended to do this once after the deployment has been completed so that the columns for the ```AuditConfigTable``` are created.
+By default, the ```AuditResourceGroups``` function runs once every 4 hours. The ```AddTags``` function is triggered by messages placed into the ```resources-to-tag``` queue. You can manually initialize the process by clicking the Run button on ```AuditResourceGroups``` the portal. It is recommended to do this once after the deployment has been completed so that the columns for the ```AuditConfig``` table are created.
 
 When in operation, the solution works by interacting with the following tables hosted in the Storage Account.
 
@@ -70,7 +70,7 @@ Once configuration is completed, your table should look like the following:
 
 ### AuditStats
 
- Information about every subscription audit performed by ```AuditSubscriptionTags``` is recorded in this table.
+ Information about every subscription audit performed by ```AuditResourceGroups``` is recorded in this table.
 
  > NOTE: AuditStats is currently not implemented in the JavaScript version of TagSync
 
