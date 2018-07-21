@@ -56,33 +56,39 @@ async function processResourceGroups (tagList, invalidTypes, callback) {
     for (let rg of resourceGroups) {
         ctx.log(rg.name);
 
+        if (!rg.tags) {
+            ctx.log.warn('Resource Group: ', rg.name, ' does not have tags');
+            continue;
+        }
+
         var tagsToSync = tagUtil.getRequiredTags(rg.tags, tagList);
 
         if (Object.keys(tagsToSync).length < 1) {
             ctx.log.warn('Resource Group: ', rg.name, ' does not have required tags');
-        } else {
-            var resourceItems = await resourceClient.resources.listByResourceGroup(rg.name);
+            continue;
+        }
 
-            for (let resItem of resourceItems) {
-                var tagUpdatesRequired = false;
-                if (invalidTypes.indexOf(resItem.type) > -1) {
-                    ctx.log.warn('Resource type:', resItem.type, 'has known tag issue.', resItem.id);
-                    tagUpdatesRequired = false;
-                } else {
-                    if (resItem.tags === undefined) {
-                        resItem.tags = {};
-                    }
-                    tagUpdatesRequired = tagUtil.getTagUpdates(resItem.tags, tagsToSync);
-                }
+        var resourceItems = await resourceClient.resources.listByResourceGroup(rg.name);
 
-                if (tagUpdatesRequired) {
-                    var result = await getApiVersion(resItem.type);
-                    resItem.apiVersion = result.ApiVersion;
-                    resItem.apiLocation = result.ApiLocation;
-                    resItem.type = result.Type;
-                    ctx.log.info('Submitting tag updates for: ', resItem.id);
-                    updatesList.push(JSON.stringify(resItem));
+        for (let resItem of resourceItems) {
+            var tagUpdatesRequired = false;
+            if (invalidTypes.indexOf(resItem.type) > -1) {
+                ctx.log.warn('Resource type:', resItem.type, 'has known tag issue.', resItem.id);
+                tagUpdatesRequired = false;
+            } else {
+                if (resItem.tags === undefined) {
+                    resItem.tags = {};
                 }
+                tagUpdatesRequired = tagUtil.getTagUpdates(resItem.tags, tagsToSync);
+            }
+
+            if (tagUpdatesRequired) {
+                var result = await getApiVersion(resItem.type);
+                resItem.apiVersion = result.ApiVersion;
+                resItem.apiLocation = result.ApiLocation;
+                resItem.type = result.Type;
+                ctx.log.info('Submitting tag updates for: ', resItem.id);
+                updatesList.push(JSON.stringify(resItem));
             }
         }
     }

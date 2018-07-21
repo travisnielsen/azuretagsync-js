@@ -3,10 +3,10 @@
 This is a proof-of-concept application that synchronizes mandatory tags set on Resource Groups to the resources they contain. Synchronization happens automatically based on a user-defined schedule. The application is broken down into two Functions:
 
 - **AuditResourceGroups:** Executes on a user-defined schedule and reads in subscription configuration data from an Azure Storage table. This configuration includes a list of tags that a given resource group in that subscription must implement. The function iterates through each resource group, inspects the tag values, and determines if changes are required (new or modify) on resources. If so, a message is added to a queue with the details required to add / modify the tag(s) for that resource.
-- **AddTags:** Processes each message added to the queue by the AuditSubscriptions function and modifies the tags as necessary. If there are any issues with the tagging, an error is logged in the *InvalidTagResources* table. Any resource type listed in this table are exempted from future runs by *AuditSubscriptionTags*.
+
+- **AddTags:** Processes each message added to the queue by the AuditResourceGroups function and modifies the tags as necessary. If there are any issues with the tagging, an error is logged and any future resource of that type is exempted from future audits.
 
 ## Deployment
-
 
 ### Create and configure the Function App
 
@@ -34,34 +34,45 @@ Select the function app and click **Save**. Repeat this process for any addition
 
 #### Create storage tables
 
-Currently, two tables must be manually created within the storage account associated to the Function App before the solution can run. Use Azure Storage Explorer to create tables with the following names: *AuditConfig* and *ResourceTypes*
+Currently, two tables must be manually created within the storage account associated to the Function App before the solution can run. Use the Azure Portal or Azure Storage Explorer to create them with the following names:
+
+- ```AuditConfig```
+- ```ResourceTypes```
 
 ### Deploy the Functions
-Finally, clone the repository to your workstation and open the root folder in VS Code. Assuming you have the Azure Functions extension installed in VS Code, you can deploy directly to your Function App by right-clicking in the Explorer and selecting *Deploy to Function App*. You will be prompted to select a valid function app in your subscription. Use the one you created earlier.
 
-<img src="images/deploy-function-js.png" width=30%>
+The quickest way to deploy the TagSync functions is to leverage App Service's CI/CD features with this repository as a source. From the Function App, navigate to **Platform Features** > **Code Deployment** > **Deployment Options**. In the Deployments blade, click **Setup** and select **External Repository** as the source. Enter the Git URL:
+
+```http
+https://github.com/travisnielsen/azuretagsync-js.git
+```
+
+Accept the remaining default settings. App Services will clone the repo, download dependencies, and deploy the functions to your Function App. The process typically takes a few minutes.
+
+> NOTE: Another option is to clone or fork this repository into your own and configure the App Services CI/CD integration accordingly.
 
 ## Configuration and Operation
 
-By default, the ```AuditResourceGroups``` function runs once every 4 hours. The ```AddTags``` function is triggered by messages placed into the ```resources-to-tag``` queue created earler. You can manually initialize the process by clicking the Run button on ```AuditSubscriptionTags``` the portal. It is recommended to do this once after the deployment has been completed so that the columns for the ```AuditConfigTable``` are created.
+By default, the ```AuditResourceGroups``` function runs once every 4 hours. The ```AddTags``` function is triggered by messages placed into the ```resources-to-tag``` queue. You can manually initialize the process by clicking the Run button on ```AuditSubscriptionTags``` the portal. It is recommended to do this once after the deployment has been completed so that the columns for the ```AuditConfigTable``` are created.
 
-When in operation, the solution works by interacting with the tables hosted in the Storage Account.
+When in operation, the solution works by interacting with the following tables hosted in the Storage Account.
 
 ### AuditConfig
 
 For each subscription you wish to audit, you must define a configuration item for it in the AuditConfig table. Configuration currently consists of two columns.
 
 - ```SubscriptionId```: The GUID (ID) that represents the subscription.
-
 - ```RequiredTags```: A comma separated list of tags that must be synchronized from the resource group to the resource item.
 
-Once configuraiton is completed, your table shoud look like the following:
+Once configuration is completed, your table should look like the following:
 
 <img src="images/audit-config-table.png" width=75%>
 
 ### AuditStats
 
-Information about every subscription audit performed by ```AuditSubscriptionTags``` is recorded in this table.
+ Information about every subscription audit performed by ```AuditSubscriptionTags``` is recorded in this table.
+
+ > NOTE: AuditStats is currently not implemented in the JavaScript version of TagSync
 
 ### ResourceTypes
 
@@ -69,7 +80,7 @@ Azure does not currently have a unified API for resource tagging. There are case
 
  <img src="images/invalid-tag-resources.png" width=75%>
 
- When invoked, ```AuditSubscriptionTags``` reads all items from this table and skips any resource that matches a given type that indicates a tag error has happened. That way, repeated API calls that are known to fail are not made. Developers can use the information to update the code to better handle these specific resources. Administrators can use this table to tag these resources either via a script or manually.
+ When invoked, ```AuditResourceGroups``` reads all items from this table and skips any resource that matches a given type that indicates a tag error has happened. That way, repeated API calls that are known to fail are not made. Developers can use the information to update the code to better handle these specific resources. Administrators can use this table to tag these resources either via a script or manually.
 
 ## Local Development / Debugging
 
@@ -81,7 +92,8 @@ It is assumed you are working with an updated version of [Visual Studio Code](ht
 You should also have a recent version of [Azure Storage Explorer](https://azure.microsoft.com/en-us/features/storage-explorer/) installed.
 
 ### Node.js Version
-The supported version of Node.js is ```8.11.1```. Ensure this version is running on your local developmnent environment by running ```node -v```.
+
+The supported version of Node.js is ```8.11.1```. Ensure this version is running on your local development environment by running ```node -v```.
 
 ### Service Principal
 
@@ -89,29 +101,44 @@ If you wish to run this function app locally, you must create a [service princip
 
 Azure CLI
 
-```
+```bash
 az ad sp create-for-rbac --name ServicePrincipalName
 ```
 
 PowerShell
 
-```
+```powerShell
 New-AzureRmADServicePrincipal -DisplayName ServicePrincipalName
 ```
 
-When the Service Principal is created, document the ID, key, and the AAD tenant ID for use in the next step. Finally ensure the Service Principal has permissions to modify objects in your subscription(s).
+When completed, add the following entries into the Application Settings of the Function App: ```appId```, ```appSecret```, and ```tenantId```. Populate each entry with the values provided in the the console output.
+
+Finally ensure the Service Principal has permissions to modify objects in your subscription(s).
 
 ### local.settings.json
- In Azure, connection information that enables the Functions runtime to bind to services like Azure Storage (blobs, tables, and queues) is hosted in Application Settings. When the Functions runtime is running locally, this information is provided by a file named **local.settings.json**. This file contains sensitive information and is excluded from the repository, so you must download it from the Azure Portal 
 
- To do this, navigate to the Function App in the Azure Portal and click the **Download app content** link at the top of the **Overview** page. At the prompt, be sure to select ***Include app settings in the download***.  Oncde the download completes, unzip the contents and copy **local.settings.json** to the root of the **TagSync.Functions** folder.
+In Azure, connection information that enables the Functions runtime to bind to services like Azure Storage (blobs, tables, and queues) is hosted in Application Settings. When the Functions runtime is running locally, this information is provided by a file named ```local.settings.json```.
 
- Finally, add ```appId```, ```appSecret```, and ```tenantId``` items to the JSON file and set the values to match the Service Principal you created earlier. The end result should look something like this:
+This file sensitive information and is excluded from the git repository via the ```.gitignore``` file, so you must download it from the Azure Portal. To do that, execute the following command from the root folder:
+
+```func azure functionapp fetch-app-settings <YourAppName>```
+
+ Once completed, the file should appear with all the settings configured in Application Settings,including the Service Principal information. By default, all values will be encrypted using your computer's machine key. The end result should look something like this:
 
 <img src="images/local-settings-json.png" width=60%>
 
-Assuming you have the [Functions 2.0 runtime installed and configured from your workstation](https://docs.microsoft.com/en-us/azure/azure-functions/functions-run-local#v2), you should now be able to successfuly run and debug this application locally.
+> NOTE: If you configured MSI for the Function App, you may now delete ```appId```, ```appSecret```, and ```tenantId``` from Application Settings in the Azure Portal. The Service Principal is only intended to be used for local debugging and testing.
 
- ## FAQ
+Assuming you have the [Functions 2.0 runtime installed and configured from your workstation](https://docs.microsoft.com/en-us/azure/azure-functions/functions-run-local#v2), you should now be able to run and debug this application locally.
 
- TBD
+## FAQ
+
+### How do I debug a timer trigger function locally?
+
+If you're using Visual Studio Code, navigate to the Debug section and click the green arrow to start the functions runtime and attach the debugger. Next, invoke the timer job by sending an HTTP POST to the following URL:
+
+```html
+http://localhost:7071/admin/functions/AuditResourceGroups
+```
+
+This will invoke the function and allow you to use the debugger.
