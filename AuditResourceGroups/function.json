@@ -6,7 +6,7 @@
    "name": "auditTimer",
    "direction": "in",
    "schedule": "0 0 */4 * * *",
-   "runOnStartup": false
+   "runOnStartup": true
   },
   {
    "type": "table",
